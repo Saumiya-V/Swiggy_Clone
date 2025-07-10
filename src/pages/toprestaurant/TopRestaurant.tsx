@@ -1,10 +1,14 @@
 import { useQuery } from "@tanstack/react-query";
 import { CDN_URL } from "@/constants/url/URL";
-import useLocation from "@/hooks/useLocation";
+import { useLocation } from "@/hooks/useLocation";
 import type { ResList } from "@/types";
 import { Link } from "@tanstack/react-router";
 
-const fetchTopRestaurants = async (lat: number, lng: number): Promise<{
+
+const TopRestaurant = () => {
+  const { location, error } = useLocation();
+
+  const fetchTopRestaurants = async (lat: number, lng: number): Promise<{
   title: string;
   restaurants: ResList[];
 }> => {
@@ -24,8 +28,6 @@ const fetchTopRestaurants = async (lat: number, lng: number): Promise<{
   return { title, restaurants };
 };
 
-const TopRestaurant = () => {
-  const { location, error } = useLocation();
 
   const {
     data,

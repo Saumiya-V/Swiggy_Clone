@@ -42,3 +42,8 @@ export type MenuQueryResult = {
   items: MenuItem[];
   title: string;
 };
+
+
+export type cartItem = Omit<MenuItem, "ratings" | "description">
+
+export type InitialState=cartItem[] & {quantity:number}

@@ -1,13 +1,15 @@
 import { Button } from '@/components/ui/button';
 import { CDN_URL } from '@/constants/url/URL';
-import useLocation from '@/hooks/useLocation';
+import {useLocation} from '@/hooks/useLocation';
 import { useParams } from '@tanstack/react-router';
 import { SoupIcon } from 'lucide-react';
-import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import type { MenuItem } from '@/types';
+import type {  cartItem, MenuItem } from '@/types';
+import { useDispatch, useSelector } from 'react-redux';
+import { addToCart, decreaseQty } from '@/redux/slice/cartSlice';
+import type { RootState } from '@/redux/store/store';
 
-const formatter = new Intl.NumberFormat('en-IN', {
+export const formatter = new Intl.NumberFormat('en-IN', {
   style: 'currency',
   currency: 'INR',
 });
@@ -15,7 +17,17 @@ const formatter = new Intl.NumberFormat('en-IN', {
 const Menu = () => {
   const { location, error: locationError} = useLocation();
   const { id } = useParams({ from: '/menu/$id' });
-  const [isSelect,setIsSelect] = useState(false)
+   const cart = useSelector((state: RootState) => state.cart)
+  const dispatch = useDispatch()
+
+  const onAddToCart =(item:cartItem)=>{
+    dispatch(addToCart(item))
+  }
+
+
+  const handleDecrease = (id: string) => {
+    dispatch(decreaseQty(id))
+  }
 
   const fetchMenu = async () => {
       const res = await fetch(
@@ -67,7 +79,7 @@ const Menu = () => {
 
   return (
     <div className="mt-30 mx-auto max-w-[600px]">
-      <h1 className='text-xl mb-5 font-bold'>{menuItems?.title}</h1>
+      <h1 className='text-xl mb-5 font-bold'>{ menuItems?.title }</h1>
       <h2 className="text-md font-semibold mb-4">
         {safeMenuItems.length > 0 && 'Recommended'}
       </h2>
@@ -95,16 +107,49 @@ const Menu = () => {
               alt="food"
               className="w-[120px] h-[120px] object-cover rounded absolute"
             />
-            {isSelect ? <Button className="relative flex justify-between text-lg w-25 bg-white text-green-500 font-bold border-2 hover:bg-white border-gray-300 top-25 left-3 shadow-sm" >
-                <div className='hover:bg-gray-200 cursor-pointer w-15' onClick={()=>setIsSelect(false)}>-</div>
-                <p>1</p>
-                <div className='hover:bg-gray-200 cursor-pointer w-15'>+</div>
-              </Button> :<Button 
-            onClick={()=>setIsSelect(prev=>!prev)}
-            className="relative w-25 bg-white text-green-500 font-bold border-2 border-gray-300 top-25 left-3 cursor-pointer shadow-sm hover:bg-gray-200">
-             ADD
-            </Button>
-           }
+         {item.imageId && (
+  <div className="relative">
+    <img
+      src={`${CDN_URL}${item.imageId}`}
+      alt="food"
+      className="w-[120px] h-[120px] object-cover rounded"
+    />
+
+    {(() => {
+      const cartItem = cart.find(ci => ci.id === item.id);
+      if (cartItem) {
+        return (
+          <div className="relative w-24 bg-white text-green-500 font-bold border-2 border-gray-300 top-2 left-3 shadow-sm">
+            <div className='grid grid-cols-3'>
+              <button
+                onClick={() => handleDecrease(item.id)}
+                className="font-bold"
+              >
+                -
+              </button>
+              <span className='text-center'>{cartItem.quantity}</span>
+              <button
+                onClick={() => onAddToCart(item)}
+                className="font-bold"
+              >
+                +
+              </button>
+            </div>
+          </div>
+        );
+      } else {
+        return (
+          <Button
+            onClick={() => onAddToCart(item)}
+            className="relative w-24 bg-white text-green-500 font-bold border-2 border-gray-300 top-2 left-3 shadow-sm hover:bg-gray-200"
+          >
+            ADD
+          </Button>
+        );
+      }
+    })()}
+  </div>
+)}     
           </div>
               )}
             </div>

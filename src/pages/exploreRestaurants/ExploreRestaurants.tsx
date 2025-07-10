@@ -1,5 +1,5 @@
 
-import useLocation from '@/hooks/useLocation';
+import {useLocation} from '@/hooks/useLocation';
 import { useEffect, useState } from 'react';
 
 type ExploreRestaurantsProps = {
@@ -11,7 +11,7 @@ const ExploreRestaurants = ({ collectionId, tag = "layout_CCS_Dosa" }: ExploreRe
   
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const { setError, error, location } = useLocation();
+  const {  error, location } = useLocation();
 
   useEffect(() => {
     if (!location) return;
@@ -37,7 +37,7 @@ const ExploreRestaurants = ({ collectionId, tag = "layout_CCS_Dosa" }: ExploreRe
       })
       .catch((err) => {
         console.error("Fetch failed:", err);
-        setError("Failed to fetch Swiggy restaurant data.");
+   
       });
   }, [location, collectionId, tag]);
 

@@ -2,13 +2,18 @@ import { useQuery } from "@tanstack/react-query";
 import TopRestaurant from "../toprestaurant/TopRestaurant";
 import OnlineRestaurants from "../onlineDelivery/OnlineRestaurants";
 import HomeShimmerUI from "./HomeShimmerUI";
-import useLocation from "@/hooks/useLocation";
+import { useLocation } from "@/hooks/useLocation";
 import type { ItemList } from "@/types";
 import { CDN_URL } from "@/constants/url/URL";
 import { Link } from "@tanstack/react-router";
 
-const fetchHomeData = async (lat: number, lng: number): Promise<ItemList[]> => {
-  const res = await fetch(`http://localhost:4000/api/swiggy?lat=${lat}&lng=${lng}`);
+
+
+const Home = () => {
+  const {  error, location } = useLocation();
+
+  const fetchHomeData = async (lat: number, lng: number): Promise<ItemList[]> => {
+  const res = await fetch(`http://localhost:4000/api/swiggy?lat=${location?.lat}&lng=${location?.lng}`);
   const data = await res.json();
   const cards = data?.data?.cards || [];
 
@@ -18,9 +23,6 @@ const fetchHomeData = async (lat: number, lng: number): Promise<ItemList[]> => {
 
   return itemList || [];
 };
-
-const Home = () => {
-  const {  error, location } = useLocation();
 
   const {
     data: item = [],

@@ -193,6 +193,36 @@ app.get('/api/restaurants', async (req, res) => {
   }
 });
 
+app.get('/api/search', async (req, res) => {
+  const { lat, lng, str } = req.query;
+
+  if (!lat || !lng || !str) {
+    return res.status(400).json({ error: 'lat, lng, and str are required' });
+  }
+
+  const swiggyURL = 'https://www.swiggy.com/dapi/restaurants/search/v3';
+
+  try {
+    const response = await axios.get(swiggyURL, {
+      params: {
+        lat,
+        lng,
+        str,
+        trackingId: "62294b18-3503-c7b3-7a0f-fe94905b63a4",
+        submitAction: "ENTER",
+        queryUniqueId: "8ea6926c-04f1-b15c-68d4-00ebd8ac7334",
+      },
+      headers: {
+        'User-Agent': 'Mozilla/5.0', 
+      }
+    });
+
+    res.json(response.data);
+  } catch (error) {
+    console.error('Error fetching Swiggy data:', error.message);
+    res.status(500).json({ error: 'Failed to fetch from Swiggy' });
+  }
+});
 
 
 app.listen(PORT, () => {

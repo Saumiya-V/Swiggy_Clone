@@ -3,52 +3,16 @@ import { Sheet, SheetContent, SheetTrigger } from '../ui/sheet';
 import { Input } from '../ui/input';
 import { ChevronDown, LocateIcon } from 'lucide-react';
 import debounce from 'lodash.debounce';
-import useLocation from '@/hooks/useLocation';
+import {useLocation} from '@/hooks/useLocation';
 
 
 
 const LocationBtn = () => {
-const [userAddress,setUserAddress] = useState("Select your location")
-const [loading,setLoading] = useState(false)
-const [error,setError] = useState("")
 const [searchInput,setsearchInput] = useState("")
 const [searchResult,setSearchResult] = useState<any[]>([])
 const [isshowGPS,setisShowGPS] = useState(false)
-const {setLocation} = useLocation()
+const {setLocation,userAddress,setUserAddress,loading,error,handleLocationFetch} = useLocation()
 
-
-
-const addressFetch = async (location:{lat:number;lng:number})=>{
-  console.log("User Location:",location)
-
-  try{
-    const response =await fetch( `https://nominatim.openstreetmap.org/reverse?lat=${location.lat}&lon=${location.lng}&format=json`)
-    const data = await response.json()
-    const address = data.display_name || "Location Found"
-    setUserAddress(address)
-  }catch(err){
-    console.log("Failed to fetch address",err)
-  }
-}
-
-const handleLocationFetch = ()=>{
-  setLoading(true)
-  setError("")
-
-  navigator.geolocation.getCurrentPosition(
-    (position)=>{
-      const {latitude,longitude}=position.coords
-      setLoading(false)
-      addressFetch({lat:latitude,lng:longitude})
-      setLocation({lat:latitude,lng:longitude})
-    },
-    (error)=>{
-      setLoading(false)
-      console.error(error)
-      setError("Unable to fetch location, Please allow location access!")
-    }
-  )
-}
 
 const debouncedSearch = useCallback(
   debounce(async (query: string) => {
@@ -108,7 +72,7 @@ useEffect(() => {
         setSearchResult([]);
         setsearchInput("");
         setisShowGPS(false)
-        setLocation({ lat: result.lat, lng: result.lng }); 
+        setLocation({ lat: result.lat, lng: result.lng });
       }}
     >
       {result.description}

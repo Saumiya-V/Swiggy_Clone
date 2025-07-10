@@ -2,9 +2,12 @@ import { BadgePercent, HelpCircle,  Search,  ShoppingCart,  User} from 'lucide-r
 import { SignIn } from '../loginSheet/SignIn'
 import LocationBtn from '../locationButton/LocationBtn'
 import { Link } from '@tanstack/react-router'
+import { useSelector } from 'react-redux'
+import type { RootState } from '@/redux/store/store'
 
 
 const NavList = () => {
+      const cart = useSelector((state:RootState)=>state.cart)
   return (
     <div className='flex min-w-[1200px] relative max-w-[1300px] items-center'>
         <div className='ml-30  flex h-[80px] items-center'>
@@ -24,12 +27,15 @@ const NavList = () => {
                 </li>
                 <li>
                     <div className='flex  gap-2 text-[16px] font-semibold'>
-                       <BadgePercent/><p> Offers <sup className='text-orange-500'>New</sup></p>
+                     <BadgePercent/>
+                      <Link to="https://www.swiggy.com/offers-near-me">
+                       <p> Offers <sup className='text-orange-500'>New</sup></p>
+                      </Link>
                     </div>
                 </li>
                  <li>
                     <div className='flex  gap-2 text-[16px] font-semibold'>
-                        <HelpCircle/> Help
+                        <HelpCircle/><Link to="/help">Help</Link>
                     </div>
                 </li>
                  <li>
@@ -39,7 +45,8 @@ const NavList = () => {
                 </li>
                  <li>
                     <div className='flex  gap-2 text-[16px] font-semibold'>
-                        <ShoppingCart/><Link to='/cart'>Cart</Link>
+                      { cart.length === 0 ? <ShoppingCart/>:<span className='w-5 h-5 rounded bg-green-500 text-white font-bold text-center'>{cart.length}</span>}
+                       <Link to='/cart'>Cart</Link>
                     </div>
                 </li>
             </ul>

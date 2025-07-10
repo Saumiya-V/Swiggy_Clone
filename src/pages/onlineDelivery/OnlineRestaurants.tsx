@@ -1,11 +1,14 @@
 import { useQuery } from "@tanstack/react-query";
 import { CDN_URL } from "@/constants/url/URL";
-import useLocation from "@/hooks/useLocation";
+import { useLocation } from "@/hooks/useLocation";
 import type { ResList } from "@/types";
 import { Link } from "@tanstack/react-router";
 
-// Fetch and parse online restaurants and title
-const fetchOnlineRestaurants = async (lat: number, lng: number): Promise<{
+
+const OnlineRestaurants = () => {
+  const {  error, location } = useLocation();
+
+  const fetchOnlineRestaurants = async (lat: number, lng: number): Promise<{
   restaurants: ResList[];
   title: string;
 }> => {
@@ -25,16 +28,13 @@ const fetchOnlineRestaurants = async (lat: number, lng: number): Promise<{
   return { restaurants, title };
 };
 
-const OnlineRestaurants = () => {
-  const {  error, location } = useLocation();
-
   const {
     data,
     isLoading,
     isError,
     error: queryError,
   } = useQuery({
-    queryKey: ["onlineRestaurants", location],
+    queryKey: ["onlineRestaurants", location?.lat, location?.lng],
     queryFn: () => {
       if (!location) return Promise.resolve({ restaurants: [], title: "" });
       return fetchOnlineRestaurants(location.lat, location.lng);
@@ -50,6 +50,9 @@ const OnlineRestaurants = () => {
   if (isLoading) {
     return <div className="animate-spin w-25 h-25 flex justify-center items-center"></div>
   }
+
+  console.log("Current location in OnlineRestaurants:", location);
+
 
   return (
     <div className="mt-25 ml-40">

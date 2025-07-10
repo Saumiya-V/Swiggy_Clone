@@ -1,8 +1,10 @@
 import App from '@/App'
+import LoginComponent from '@/components/checkoutdetails/login/LoginComponent';
 import { NotFound } from '@/components/notfound/NotFound';
 import SearchBar from '@/components/searchBar/SearchBar';
 import Cart from '@/pages/cart/Cart';
 import ExploreRestaurants from '@/pages/exploreRestaurants/ExploreRestaurants';
+import HelpSupportPage from '@/pages/help/HelpSupportPage';
 import Home from '@/pages/home/Home';
 import Menu from '@/pages/menu/Menu';
 import {createRootRoute, createRoute, createRouter} from '@tanstack/react-router'
@@ -42,6 +44,18 @@ const exploreRestaurantsRoute = createRoute({
     component:ExploreRestaurants
 })
 
-const routeTree = rootRoute.addChildren([homeRoute,searchRoute,menuRoute,cartRoute,exploreRestaurantsRoute ])
+const helpRoute = createRoute({
+    path:"/help",
+    getParentRoute:()=>rootRoute,
+    component:HelpSupportPage
+})
+
+const LoginRoute = createRoute({
+    path:"/login",
+    getParentRoute:()=>rootRoute,
+    component:LoginComponent
+})
+
+const routeTree = rootRoute.addChildren([homeRoute,searchRoute,menuRoute,cartRoute,exploreRestaurantsRoute,helpRoute,LoginRoute ])
 
 export const router = createRouter({routeTree})
