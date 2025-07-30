@@ -1,11 +1,8 @@
-import { Button } from '@/components/ui/button'
-import { Link } from '@tanstack/react-router'
-import { useState } from 'react'
-import LoginComponent from './LoginComponent'
+import {LoginComponent} from './LoginComponent'
 
 
 const Login = () => {
-  const [isDisplayLogin,setIsDisplayLogin] = useState(false)
+ 
   return (
     <div>
   <div className="flex flex-col md:flex-row items-center justify-between gap-10">
@@ -17,11 +14,7 @@ const Login = () => {
       </div>
 
       <div>
-       {
-        isDisplayLogin ? (<LoginComponent/>):( <Button onClick={()=>setIsDisplayLogin(true)} className="bg-green-600 text-white font-semibold  p-5 items-center rounded-sm hover:bg-green-700 cursor-pointer">
-          <p>LOGIN / SIGN UP</p>
-        </Button>)
-       }
+       <LoginComponent/>
       </div>
     </div>
   </div>

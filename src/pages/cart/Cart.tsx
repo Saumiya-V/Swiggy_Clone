@@ -12,7 +12,6 @@ import { Link } from '@tanstack/react-router'
 const Cart = () => {
   const cart = useSelector((state: RootState) => state.cart)
   const dispatch = useDispatch()
- 
 
   const handleIncrease = (item: cartItem) => {
     dispatch(addToCart(item))

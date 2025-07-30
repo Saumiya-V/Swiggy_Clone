@@ -1,89 +1,96 @@
+import { useSelector } from "react-redux";
+import type { RootState } from "../../../redux/store/store";
+import {
+  setFormField,
+  toggleAuthMode,
+  setUser,
+  registerUser,
+  sendOtp,
+  verifyOtp,
+} from "../../../redux/slice/authSlice";
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { useAppDispatch } from "@/hooks/useAppDispatch";
 
-import axios from 'axios';
-import { useState } from 'react'
-import { toast } from 'react-toastify';
+export function LoginComponent() {
+  const [showSheet, setShowSheet] = useState(false);
+  const [showLogoutDiv, setShowLogoutDiv] = useState(false);
 
-const LoginComponent = () => {
-     const [isLoginMode, setIsLoginMode] = useState(true);
-      const [phone, setPhone] = useState("");
-      const [otp, setOtp] = useState("");
-      const [name, setName] = useState("");
-      const [email, setEmail] = useState("");
-      const [showOtpField, setShowOtpField] = useState(false);
-      
-  const handleAuth = async () => {
+  const dispatch = useAppDispatch();
+  const {
+    user,
+    authMode,
+    form: { phone, otp, name, email },
+    showOtpField,
+    loading,
+    error
+  } = useSelector((state: RootState) => state.auth);
+
+  const handleAuth = () => {
     if (!showOtpField) {
-      if (isLoginMode) {
-        try {
-          const res = await axios.post("http://localhost:4000/send-otp", { phone });
-          if (res.data.success) setShowOtpField(true);
-        } catch (err) {
-          if (axios.isAxiosError(err)) {
-            alert(err.response?.data?.message || "Login failed");
-          } else {
-            alert("Login failed");
-          }
-        }
-      } else {
-        try {
-          const res = await axios.post("http://localhost:4000/register", { name, email, phone });
-          if (res.data.success) {
-            alert("Registered! Now verify via OTP");
-            setIsLoginMode(true);
-            setShowOtpField(true);
-            await axios.post("http://localhost:4000/send-otp", { phone });
-            toast.success("OTP Sent")
-          }
-        } catch (err) {
-          if (axios.isAxiosError(err)) {
-            alert(err.response?.data?.message || "Registration failed");
-          } else {
-            alert("Registration failed");
-          }
-        }
-      }
+      authMode === "login" ? dispatch(sendOtp()) : dispatch(registerUser());
     } else {
-      try {
-        const res = await axios.post("http://localhost:4000/verify-otp", { phone, otp });
-        if (res.data.success) {
-          localStorage.setItem("user", JSON.stringify(res.data.user));
-          setPhone(""); setOtp(""); setEmail(""); setName("");
-          setShowOtpField(false);
-        }
-      } catch (err) {
-        if (axios.isAxiosError(err)) {
-          alert(err.response?.data?.message || "OTP verification failed");
-        } else {
-          alert("OTP verification failed");
-        }
-      }
+      dispatch(verifyOtp());
+      setShowSheet(false);
     }
   };
 
-  return (
-    <div>
-        <div className="flex gap-10 mx-auto">
+  const handleLogout = () => {
+    dispatch(setUser(null));
+    setShowLogoutDiv(false);
+  };
+
+  return user ? (
+    <div className="relative">
+      <Button
+        className="bg-transparent p-0 m-0 text-[16px] text-black font-semibold shadow-none hover:bg-transparent cursor-pointer"
+        onClick={() => setShowLogoutDiv((prev) => !prev)}
+      >
+        {user.name}
+      </Button>
+      {showLogoutDiv && (
+        <div className="absolute top-10 right-[-8px]">
+          <Button
+            className="bg-white px-7 text-black border-2 hover:bg-white text-black cursor-pointer"
+            onClick={handleLogout}
+          >
+            Logout
+          </Button>
+        </div>
+      )}
+    </div>
+  ) : (
+    <Sheet open={showSheet} onOpenChange={setShowSheet}>
+      <SheetTrigger asChild>
+        <div onClick={() => setShowSheet(true)}>
+          <Button className="bg-green-600 text-white font-semibold  p-5 items-center rounded-sm hover:bg-green-700 cursor-pointer">
+          <p>LOGIN / SIGN UP</p>
+        </Button>
+        </div>
+      </SheetTrigger>
+      <SheetContent className="z-[1000]">
+        <div className="flex gap-10 mx-auto mt-30">
           <div>
-            <h2 className="text-2xl font-semibold mb-3">
-              {isLoginMode ? "Login" : "Sign Up"}
+            <h2 className="text-3xl font-semibold mb-3">
+              {authMode === "login" ? "Login" : "Sign Up"}
             </h2>
             <p>
               or{" "}
               <span
                 className="text-orange-500 cursor-pointer font-semibold"
-                onClick={() => {
-                  setIsLoginMode((prev) => !prev);
-                  setShowOtpField(false);
-                }}
+                onClick={() => dispatch(toggleAuthMode())}
               >
-                {isLoginMode ? "create an account" : "login to your account"}
+                {authMode === "login"
+                  ? "create an account"
+                  : "login to your account"}
               </span>
             </p>
           </div>
           <img
             src="https://media-assets.swiggy.com/swiggy/image/upload/fl_lossy,f_auto,q_auto/Image-login_btpq7r"
             alt="login"
-            className="h-15 w-15"
+            className="h-25 w-25"
           />
         </div>
 
@@ -91,54 +98,66 @@ const LoginComponent = () => {
           <input
             type="text"
             value={phone}
-            onChange={(e) => setPhone(e.target.value)}
+            onChange={(e) =>
+              dispatch(setFormField({ field: "phone", value: e.target.value }))
+            }
             placeholder="Phone Number"
-            className="border p-4 w-[250px]"
+            className="border p-4 w-[300px]"
           />
           {showOtpField && (
             <input
               type="text"
               value={otp}
-              onChange={(e) => setOtp(e.target.value)}
+              onChange={(e) =>
+                dispatch(setFormField({ field: "otp", value: e.target.value }))
+              }
               placeholder="OTP"
-              className="border p-4 w-[250px]"
+              className="border p-4 w-[300px]"
             />
           )}
-          {!isLoginMode && (
+          {authMode === "register" && (
             <>
               <input
                 type="text"
                 value={name}
-                onChange={(e) => setName(e.target.value)}
+                onChange={(e) =>
+                  dispatch(setFormField({ field: "name", value: e.target.value }))
+                }
                 placeholder="Name"
-                className="border p-4 w-[250px]"
+                className="border p-4 w-[300px]"
               />
               <input
                 type="email"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) =>
+                  dispatch(setFormField({ field: "email", value: e.target.value }))
+                }
                 placeholder="Email"
-                className="border p-4 w-[250px]"
+                className="border p-4 w-[300px]"
               />
             </>
           )}
+          {error && authMode !== 'register' && <p className="text-red-500 mt-5">{error}</p>}
           <button
             onClick={handleAuth}
-            className="bg-orange-500 text-white font-semibold mt-4 p-4 w-[250px]"
+            className="bg-orange-500 text-white font-semibold mt-4 p-4"
+            disabled={loading}
           >
-            {showOtpField
+            {loading
+              ? "Please wait..."
+              : showOtpField
               ? "Verify OTP"
-              : isLoginMode
+              : authMode === "login"
               ? "Login with OTP"
               : "Register"}
           </button>
-          <p className="mt-2 text-sm w-[250px]">
+          <p className="mt-2 text-sm w-[300px]">
             By continuing, you agree to our{" "}
             <span className="font-semibold">Terms & Conditions</span>
           </p>
         </div>
-    </div>
-  )
+      </SheetContent>
+    </Sheet>
+  );
 }
 
-export default LoginComponent

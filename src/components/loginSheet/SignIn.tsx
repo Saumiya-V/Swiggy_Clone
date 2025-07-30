@@ -1,121 +1,90 @@
+import { useSelector } from "react-redux";
+import type { RootState } from "../../redux/store/store";
+import {
+  setFormField,
+  toggleAuthMode,
+  setUser,
+  registerUser,
+  sendOtp,
+  verifyOtp,
+  setError,
+} from "../../redux/slice/authSlice";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { useEffect, useState } from "react";
-import axios from "axios";
-import type { User } from "@/types";
-
+import { useAppDispatch } from "@/hooks/useAppDispatch";
 
 export function SignIn() {
-  const [isLoginMode, setIsLoginMode] = useState(true);
-  const [phone, setPhone] = useState("");
-  const [otp, setOtp] = useState("");
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [showOtpField, setShowOtpField] = useState(false);
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [showSheet,setShowSheet] = useState(false)
-  const [showLogoutDiv,setshowLogoutDiv] = useState(false)
+  const [showSheet, setShowSheet] = useState(false);
+  const [showLogoutDiv, setShowLogoutDiv] = useState(false);
 
-  useEffect(() => {
-    const stored = localStorage.getItem("user");
-    if (stored) setCurrentUser(JSON.parse(stored));
-  }, []);
+  const dispatch = useAppDispatch();
+  const {
+    user,
+    authMode,
+    form: { phone, otp, name, email },
+    showOtpField,
+    loading,
+    error
+  } = useSelector((state: RootState) => state.auth);
 
-  const handleAuth = async () => {
+  const handleAuth = () => {
     if (!showOtpField) {
-      if (isLoginMode) {
-        try {
-          const res = await axios.post("http://localhost:4000/send-otp", { phone });
-          if (res.data.success) setShowOtpField(true);
-        } catch (err) {
-          if (axios.isAxiosError(err)) {
-            alert(err.response?.data?.message || "Login failed");
-          } else {
-            alert("Login failed");
-          }
-        }
-      } else {
-        try {
-          const res = await axios.post("http://localhost:4000/register", { name, email, phone });
-          if (res.data.success) {
-            alert("Registered! Now verify via OTP");
-            setIsLoginMode(true);
-            setShowOtpField(true);
-            await axios.post("http://localhost:4000/send-otp", { phone });
-          }
-        } catch (err) {
-          if (axios.isAxiosError(err)) {
-            alert(err.response?.data?.message || "Registration failed");
-          } else {
-            alert("Registration failed");
-          }
-        }
-      }
+      authMode === "login" ? dispatch(sendOtp()) : dispatch(registerUser());
     } else {
-      try {
-        const res = await axios.post("http://localhost:4000/verify-otp", { phone, otp });
-        if (res.data.success) {
-          setShowSheet(false)
-          setCurrentUser(res.data.user);
-          localStorage.setItem("user", JSON.stringify(res.data.user));
-          setPhone(""); setOtp(""); setEmail(""); setName("");
-          setShowOtpField(false);
-        }
-      } catch (err) {
-        if (axios.isAxiosError(err)) {
-          alert(err.response?.data?.message || "OTP verification failed");
-        } else {
-          alert("OTP verification failed");
-        }
-      }
+      dispatch(verifyOtp());
+      setShowSheet(false);
     }
   };
 
- const handleLogout = () => {
-  localStorage.removeItem("user");
-  setCurrentUser(null);
-  setshowLogoutDiv(false)
-};
+  const handleLogout = () => {
+    dispatch(setUser(null));
+    setShowLogoutDiv(false);
+  };
 
-
-  return (
-    currentUser?(<div className="relative">
-      <Button className="bg-transparent p-0 m-0 text-[16px] text-black font-semibold shadow-none hover:bg-transparent cursor-pointer" onClick={()=>setshowLogoutDiv(prev=>!prev)}>{currentUser.name}</Button>
-      {
-        showLogoutDiv && <div className="absolute top-10 right-[-8px]">
-          <Button className="bg-white px-7 text-black border-2 hover:bg-white text-black cursor-pointer" onClick={handleLogout}>Logout</Button>
+  return user ? (
+    <div className="relative">
+      <Button
+        className="bg-transparent p-0 m-0 text-[16px] text-black font-semibold shadow-none hover:bg-transparent cursor-pointer"
+        onClick={() => setShowLogoutDiv((prev) => !prev)}
+      >
+        {user.name}
+      </Button>
+      {showLogoutDiv && (
+        <div className="absolute top-10 right-[-8px]">
+          <Button
+            className="bg-white px-7 text-black border-2 hover:bg-white text-black cursor-pointer"
+            onClick={handleLogout}
+          >
+            Logout
+          </Button>
         </div>
-      }
-    </div>):
+      )}
+    </div>
+  ) : (
     <Sheet open={showSheet} onOpenChange={setShowSheet}>
       <SheetTrigger asChild>
-        <div onClick={()=>setShowSheet(true)}>
-          <Button  className="bg-transparent p-0 m-0 text-[16px] text-black font-semibold shadow-none hover:bg-transparent cursor-pointer">
+        <div onClick={() => setShowSheet(true)}>
+          <Button className="bg-transparent p-0 m-0 text-[16px] text-black font-semibold shadow-none hover:bg-transparent cursor-pointer">
             Sign In
           </Button>
         </div>
       </SheetTrigger>
-      {
-        showLogoutDiv?(
-          <div className="">
-            <button onClick={handleLogout}>Logout</button>
-          </div>
-        ):(<SheetContent className="z-[1000]">
+      <SheetContent className="z-[1000]">
         <div className="flex gap-10 mx-auto mt-30">
           <div>
             <h2 className="text-3xl font-semibold mb-3">
-              {isLoginMode ? "Login" : "Sign Up"}
+              {authMode === "login" ? "Login" : "Sign Up"}
             </h2>
             <p>
               or{" "}
               <span
                 className="text-orange-500 cursor-pointer font-semibold"
-                onClick={() => {
-                  setIsLoginMode((prev) => !prev);
-                  setShowOtpField(false);
-                }}
+                onClick={() => dispatch(toggleAuthMode())}
               >
-                {isLoginMode ? "create an account" : "login to your account"}
+                {authMode === "login"
+                  ? "create an account"
+                  : "login to your account"}
               </span>
             </p>
           </div>
@@ -130,7 +99,14 @@ export function SignIn() {
           <input
             type="text"
             value={phone}
-            onChange={(e) => setPhone(e.target.value)}
+            onChange={(e) => {
+              dispatch(setFormField({ field: "phone", value: e.target.value }));
+              if ((e.target.value).length < 10 ) {
+                dispatch(setError('Please enter valid phone number'));
+              } else {
+                dispatch(setError(null));
+              }
+            }}
             placeholder="Phone Number"
             className="border p-4 w-[300px]"
           />
@@ -138,36 +114,46 @@ export function SignIn() {
             <input
               type="text"
               value={otp}
-              onChange={(e) => setOtp(e.target.value)}
+              onChange={(e) =>
+                dispatch(setFormField({ field: "otp", value: e.target.value }))
+              }
               placeholder="OTP"
               className="border p-4 w-[300px]"
             />
           )}
-          {!isLoginMode && (
+          {authMode === "register" && (
             <>
               <input
                 type="text"
                 value={name}
-                onChange={(e) => setName(e.target.value)}
+                onChange={(e) =>
+                  dispatch(setFormField({ field: "name", value: e.target.value }))
+                }
                 placeholder="Name"
                 className="border p-4 w-[300px]"
               />
               <input
                 type="email"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) =>
+                  dispatch(setFormField({ field: "email", value: e.target.value }))
+                }
                 placeholder="Email"
                 className="border p-4 w-[300px]"
               />
             </>
           )}
+          {error && authMode !== 'register' && <p className="text-red-500 mt-5">{error}</p>}
           <button
             onClick={handleAuth}
             className="bg-orange-500 text-white font-semibold mt-4 p-4"
+            disabled={loading}
           >
-            {showOtpField
+            {loading
+              ? "Please wait..."
+              : showOtpField
               ? "Verify OTP"
-              : isLoginMode
+              : authMode === "login"
               ? "Login with OTP"
               : "Register"}
           </button>
@@ -176,8 +162,8 @@ export function SignIn() {
             <span className="font-semibold">Terms & Conditions</span>
           </p>
         </div>
-      </SheetContent>)
-      }
+      </SheetContent>
     </Sheet>
   );
 }
+

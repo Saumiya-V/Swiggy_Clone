@@ -33,6 +33,7 @@ app.post('/register', (req, res) => {
 });
 
 app.post("/send-otp", (req, res) => {
+  console.log("/send-otp")
   const { phone } = req.body;
   if (!phone) {
     return res.status(400).json({ success: false, message: "Phone number is required" });
@@ -171,16 +172,22 @@ app.get('/api/menu', async (req, res) => {
 app.get('/api/restaurants', async (req, res) => {
   const { lat, lng, collection, tags } = req.query;
 
-  if (!lat || !lng || !collection || !tags) {
+  if (!lat || !lng || !collection) {
     return res.status(400).json({
-      error: 'Missing required query parameters: lat, lng, collection, tags',
+      error: 'Missing required query parameters: lat, lng, collection',
     });
   }
 
-  const swiggyUrl = `https://www.swiggy.com/dapi/restaurants/list/v5?lat=${lat}&lng=${lng}&collection=${collection}&tags=${tags}&sortBy=&filters=&type=rcv2&offset=0&page_type=null`;
+  let swiggyResUrl = `https://www.swiggy.com/dapi/restaurants/list/v5?lat=${lat}&lng=${lng}&collection=${collection}`;
+
+  if (tags) {
+    swiggyResUrl += `&tags=${tags}`;
+  }
+
+  swiggyResUrl += `&sortBy=&filters=&type=rcv2&offset=0&page_type=null`;
 
   try {
-    const response = await axios.get(swiggyUrl, {
+    const response = await axios.get(swiggyResUrl, {
       headers: {
         'User-Agent': 'Mozilla/5.0',
       },
@@ -188,10 +195,12 @@ app.get('/api/restaurants', async (req, res) => {
 
     res.json(response.data);
   } catch (error) {
-    console.error('Error fetching Swiggy data:', error.message);
+    console.error('❌ Error fetching Swiggy collection/tag data:', error.message);
     res.status(500).json({ error: 'Failed to fetch data from Swiggy' });
   }
 });
+
+
 
 app.get('/api/search', async (req, res) => {
   const { lat, lng, str } = req.query;
@@ -223,6 +232,32 @@ app.get('/api/search', async (req, res) => {
     res.status(500).json({ error: 'Failed to fetch from Swiggy' });
   }
 });
+
+
+app.get('/api/swiggy/address-recommend', async (req, res) => {
+  const { place_id } = req.query;
+
+  if (!place_id) {
+    return res.status(400).json({ error: 'Missing place_id' });
+  }
+
+  try {
+    const swiggyUrl = `https://www.swiggy.com/dapi/misc/address-recommend?place_id=${place_id}`;
+
+    const response = await axios.get(swiggyUrl, {
+      headers: {
+        'User-Agent':
+          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/114.0.0.0 Safari/537.36',
+      },
+    });
+
+    res.json(response.data);
+  } catch (error) {
+    console.error('Error fetching from Swiggy:', error.message);
+    res.status(500).json({ error: 'Failed to fetch address recommendation' });
+  }
+});
+
 
 
 app.listen(PORT, () => {

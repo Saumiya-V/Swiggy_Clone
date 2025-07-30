@@ -1,11 +1,14 @@
+import type { RootState } from "@/redux/store/store";
 import { steps } from "@/utils/step";
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { useSelector } from "react-redux";
 
 export default function VerticalStepper() {
   const [activeStep, setActiveStep] = useState(0);
+  const {user} = useSelector((state:RootState)=>state.auth)
 
   const handleNext = () => {
-    if (activeStep < steps.length - 1) {
+    if (activeStep < steps.length - 1 && user) {
       setActiveStep((prev) => prev + 1);
     }
   };
@@ -20,9 +23,16 @@ export default function VerticalStepper() {
     setActiveStep(0);
   };
 
+ const stepsArray = useMemo(() => {
+  const localSteps = [...steps];
+  if (user) localSteps.shift();
+  return localSteps;
+}, [user]);
+
+
   return (
     <div className="w-full p-8 space-y-6">
-      {steps.map((s, i) => (
+      {stepsArray.map((s, i) => (
         <div key={s.title}>
           <div className="flex items-center gap-4">
             <div
@@ -51,7 +61,7 @@ export default function VerticalStepper() {
                     Back
                   </button>
                 )}
-                {activeStep < steps.length - 1 ? (
+                {activeStep < steps.length - 2 ? (
                   <button
                     onClick={handleNext}
                     className="px-4 py-1 bg-orange-500 text-white text-sm rounded hover:bg-orange-600"

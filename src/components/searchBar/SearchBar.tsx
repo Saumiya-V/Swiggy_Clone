@@ -4,37 +4,13 @@ import { Search, X } from 'lucide-react';
 import { formatter } from '@/pages/menu/Menu';
 import { useDispatch, useSelector } from 'react-redux';
 import type { RootState } from '@/redux/store/store';
-import type { cartItem } from '@/types';
+import {type ResList, type cartItem, type Dish, type Suggestion } from '@/types';
 import { addToCart, decreaseQty } from '@/redux/slice/cartSlice';
 import { Button } from '../ui/button';
-
-type Suggestion ={
-    text:string;
-    type:string;
-    cloudinaryId:string;
-}
-
-type Dish = {
-  card: {
-    card: {
-      info: {
-        id: string;
-        name: string;
-        imageId: string;
-        price: number;
-      };
-      restaurant:{
-        info:{
-            name:string;
-            avgRating:number;
-            sla:{
-            slaString:string;
-        }
-        };
-      }
-    };
-  };
-};
+import { CDN_URL } from '@/constants/url/URL';
+import ToggleButton from '../toggleButton/ToggleButton';
+import { Badge } from '../ui/badge';
+import { Link } from '@tanstack/react-router';
 
 
 const SearchBar = () => {
@@ -43,6 +19,7 @@ const SearchBar = () => {
     const [location,setLocation] = useState<{lat:number,lng:number}|null>(null);
     const [dishList,setDishList] = useState<Dish[]>([])
     const [isDispaly,setIsDisplay]=useState(false)
+      const [selected, setSelected] = useState<'Restaurants' | 'Dishes'>('Restaurants');
     const cart = useSelector((state: RootState) => state.cart)
     const dispatch = useDispatch()
 
@@ -55,8 +32,6 @@ const SearchBar = () => {
     dispatch(decreaseQty(id))
   }
 
-
-    const CDN_URL = "https://media-assets.swiggy.com/swiggy/image/upload/";
  
     useEffect(()=>{
         navigator.geolocation.getCurrentPosition(
@@ -92,6 +67,7 @@ const SearchBar = () => {
             });
 
             const data = res?.data?.data?.suggestions || []
+            console.log('Suggestion data:',data)
             setSuggestions(data)
         }catch (err) {
         console.error("Failed to fetch suggestions:", err);
@@ -119,6 +95,7 @@ const SearchBar = () => {
         dishCards.shift()
         console.log(dishCards)
         setDishList(dishCards)
+        
       }catch(error){
         console.error(error)
       }
@@ -160,12 +137,14 @@ const SearchBar = () => {
        </div>
        {
         isDispaly && (
-        <div className=' w-[850px] p-3 border border-gray-400 mx-auto grid grid-cols-2 gap-5 bg-gray-200'>
+        <div>
+          <ToggleButton selected={selected} setSelected={setSelected}/>
+          <div className=' w-[850px] p-3 border border-gray-400 mx-auto grid grid-cols-2 gap-5 bg-gray-200'>
         {
-            dishList.map((dish)=>{
+           selected === 'Dishes'? dishList.map((dish)=>{
                 const info = dish?.card?.card?.info
                 const resName = dish?.card?.card?.restaurant?.info?.name
-                const rating = dish?.card?.card?.restaurant?.info?.avgRating
+                const rating = dish?.card?.card?.restaurant?.info?.avgRatingString
                 const deliveryTime = dish?.card?.card?.restaurant?.info?.sla?.slaString
                 return <div key={info.id} className='border p-5 bg-white rounded-2xl'>
                    <div className='border-b border-dashed border-sm mb-5'>
@@ -216,9 +195,37 @@ const SearchBar = () => {
                    </div>
                 </div>
 
+            }): dishList.map((res)=>{
+              const info = res.card.card.restaurant.info
+              const discount = info.aggregatedDiscountInfoV3
+              return <Link to={`/menu/${info.id}`}>
+              <div className='border p-5 bg-white rounded-2xl flex gap-8'>
+                   <div className="max-w-75 cursor-pointer relative flex items-center justify-center duration-300 hover:scale-110">
+               {
+                  discount && (
+                    <Badge className="text-white top-20  absolute  grid rounded-xl shadow-lg font-bold bg-white text-orange-500 "><p>{discount.header}</p>
+                    <p>{discount.subHeader}</p>
+                    </Badge>
+                  )
+                }
+                  <img src={`${CDN_URL}${info.cloudinaryImageId}`} alt={info.name} className='h-25 w-35  rounded-2xl'/>
+                   
+                 </div>
+                 <div className='flex flex-col gap-2'>
+                  <p className='text-md font-bold'>{info.name}</p>
+                  <div className='flex flex-wrap gap-2 text-sm text-gray-600'>
+                    <p>⭐{info.avgRatingString}</p>
+                    <p>🚚{info.sla.slaString}</p>
+                    <p >{formatter.format(Number(info.costForTwo)/100)} for two</p>
+                  </div>
+                  <p className='text-sm text-gray-600'>{info.cuisines.join(', ')}</p>
+                 </div>
+              </div>
+            </Link>
             })
         }
        </div>
+        </div>
         )
        }
     </div>

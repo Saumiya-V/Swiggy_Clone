@@ -1,5 +1,5 @@
 import App from '@/App'
-import LoginComponent from '@/components/checkoutdetails/login/LoginComponent';
+import {LoginComponent} from '@/components/checkoutdetails/login/LoginComponent';
 import { NotFound } from '@/components/notfound/NotFound';
 import SearchBar from '@/components/searchBar/SearchBar';
 import Cart from '@/pages/cart/Cart';
@@ -7,6 +7,7 @@ import ExploreRestaurants from '@/pages/exploreRestaurants/ExploreRestaurants';
 import HelpSupportPage from '@/pages/help/HelpSupportPage';
 import Home from '@/pages/home/Home';
 import Menu from '@/pages/menu/Menu';
+import PaymentPage from '@/pages/payment/Payment';
 import {createRootRoute, createRoute, createRouter} from '@tanstack/react-router'
 
 const rootRoute = createRootRoute({
@@ -39,10 +40,10 @@ const cartRoute = createRoute({
 })
 
 const exploreRestaurantsRoute = createRoute({
-    path:"/itemBasedRestaurants/$id",
-    getParentRoute:()=>rootRoute,
-    component:ExploreRestaurants
-})
+  path: "/itemBasedRestaurants/$collectionId",
+  getParentRoute: () => rootRoute,
+  component: ExploreRestaurants,
+});
 
 const helpRoute = createRoute({
     path:"/help",
@@ -56,6 +57,12 @@ const LoginRoute = createRoute({
     component:LoginComponent
 })
 
-const routeTree = rootRoute.addChildren([homeRoute,searchRoute,menuRoute,cartRoute,exploreRestaurantsRoute,helpRoute,LoginRoute ])
+const PaymentRoute = createRoute({
+    path:"/payment",
+    getParentRoute:()=>rootRoute,
+    component:PaymentPage
+})
+
+const routeTree = rootRoute.addChildren([homeRoute,searchRoute,menuRoute,cartRoute,exploreRestaurantsRoute,helpRoute,LoginRoute,PaymentRoute ])
 
 export const router = createRouter({routeTree})

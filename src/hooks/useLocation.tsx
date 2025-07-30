@@ -1,19 +1,6 @@
+import type { Location, LocationContextType } from "@/types";
 import  { createContext, useContext, useState,type ReactNode,useEffect } from "react";
 
-export interface Location {
-  lat: number;
-  lng: number;
-}
-
-interface LocationContextType {
-  location: Location | null;
-  setLocation: (loc: Location) => void;
-  userAddress: string;
-  setUserAddress: (address: string) => void;
-  loading: boolean;
-  error: string | null;
-  handleLocationFetch: () => void;
-}
 
 const LocationContext = createContext<LocationContextType | undefined>(undefined);
 
@@ -46,7 +33,7 @@ const handleLocationFetch = ()=>{
       const {latitude,longitude}=position.coords
       setLoading(false)
       addressFetch({lat:latitude,lng:longitude})
-      setLocation({lat:latitude,lng:longitude})
+      setLocation({lat:latitude,lng:longitude} as Location)
     },
     (error)=>{
       setLoading(false)
